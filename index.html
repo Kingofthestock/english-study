@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영어 · 맞춤법 학습 | 퀴즈로 공부하기</title>
+<meta name="description" content="토익 빈출 1200단어, 일상 회화 1000단어, 한글 맞춤법을 퀴즈로 반복 학습하세요.">
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449;
+    --accent:#38bdf8; --accent2:#818cf8;
+    --good:#22c55e; --bad:#ef4444; --text:#e2e8f0; --muted:#94a3b8;
+    --border:#334155;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;font-family:"Noto Sans KR","Segoe UI",system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#1e293b,#0f172a 60%);
+    color:var(--text);min-height:100vh;padding:16px;
+  }
+  .wrap{max-width:660px;margin:0 auto}
+  header{text-align:center;padding:24px 0 8px}
+  header h1{margin:0;font-size:26px;letter-spacing:-.5px}
+  header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .opt-group{margin-bottom:18px}
+  .opt-group h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600}
+  .opts{display:flex;gap:10px;flex-wrap:wrap}
+  .opt{flex:1;min-width:130px;background:var(--card2);border:2px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:.15s;text-align:center}
+  .opt:hover{border-color:var(--accent)}
+  .opt.active{border-color:var(--accent);background:rgba(56,189,248,.12)}
+  .opt b{display:block;font-size:15px}
+  .opt small{color:var(--muted);font-size:12px}
+
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;color:#fff}
+  .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .btn-primary:hover{filter:brightness(1.08)}
+  .btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+  .btn:active{transform:scale(.98)}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px;color:var(--muted)}
+  .progress{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin-bottom:20px}
+  .progress > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .3s}
+
+  .qtype{font-size:13px;color:var(--accent);font-weight:600;margin-bottom:6px;text-align:center}
+  .question{font-size:30px;font-weight:800;text-align:center;margin:6px 0 4px;letter-spacing:-.5px;word-break:break-word;line-height:1.3}
+  .qsub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:20px;min-height:18px}
+  .choices{display:grid;gap:12px}
+  .choice{background:var(--card2);border:2px solid var(--border);border-radius:12px;padding:16px;font-size:16px;cursor:pointer;transition:.12s;text-align:left}
+  .choice:hover{border-color:var(--accent)}
+  .choice.correct{border-color:var(--good);background:rgba(34,197,94,.15)}
+  .choice.wrong{border-color:var(--bad);background:rgba(239,68,68,.15)}
+  .choice.disabled{cursor:default;pointer-events:none}
+  .choice.disabled:not(.correct):not(.wrong){opacity:.5}
+
+  .feedback{margin-top:18px;text-align:center;min-height:24px;font-weight:600}
+  .feedback.good{color:var(--good)}
+  .feedback.bad{color:var(--bad)}
+  .explain{margin-top:8px;font-size:14px;color:var(--muted);font-weight:400;line-height:1.5}
+  .next-wrap{margin-top:16px}
+
+  .result-score{font-size:54px;font-weight:900;text-align:center;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .result-sub{text-align:center;color:var(--muted);margin-bottom:20px}
+  .review-item{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border);font-size:14px;gap:10px}
+  .review-item .w{font-weight:700}
+  .review-item .m{color:var(--muted);text-align:right}
+
+  .stat-pill{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:13px;color:var(--muted);margin:4px}
+  .row{display:flex;gap:12px;margin-top:12px}
+  .row .btn{margin:0}
+  .hide{display:none}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:20px;line-height:1.6}
+  .speak{background:none;border:1px solid var(--border);color:var(--accent);border-radius:8px;padding:6px 14px;font-size:14px;cursor:pointer}
+  .loading{text-align:center;padding:40px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>영어 · 맞춤법 학습</span></h1>
+    <p>퀴즈로 반복하며 자연스럽게 외우세요</p>
+  </header>
+
+  <section id="setup" class="card">
+    <div class="opt-group">
+      <h3>학습 분야</h3>
+      <div class="opts" id="catOpts">
+        <div class="opt active" data-cat="all"><b>전체 섞기</b><small>영어+맞춤법</small></div>
+        <div class="opt" data-cat="basic"><b>기초 회화</b><small id="cntBasic">단어</small></div>
+        <div class="opt" data-cat="toeic"><b>토익 빈출</b><small id="cntToeic">단어</small></div>
+        <div class="opt" data-cat="spelling"><b>한글 맞춤법</b><small id="cntSpelling">문제</small></div>
+      </div>
+    </div>
+
+    <div class="opt-group">
+      <h3>한 세션 문제 수</h3>
+      <div class="opts" id="countOpts">
+        <div class="opt" data-count="10"><b>10문제</b></div>
+        <div class="opt active" data-count="20"><b>20문제</b></div>
+        <div class="opt" data-count="40"><b>40문제</b></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn">학습 시작하기</button>
+
+    <div style="text-align:center;margin-top:16px">
+      <span class="stat-pill">🔥 연속 학습일 <b id="streak" style="color:var(--accent);margin-left:4px">0</b></span>
+      <span class="stat-pill">📚 누적 정답 <b id="totalCorrect" style="color:var(--accent);margin-left:4px">0</b></span>
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:14px;line-height:1.6">
+      뜻 → 단어 → 철자 순으로 자동 출제되고,<br>틀린 문제는 세션 끝에 다시 나와요.
+    </p>
+  </section>
+
+  <section id="quiz" class="card hide">
+    <div class="topbar">
+      <span id="qProgress">1 / 20</span>
+      <span id="qScore">정답 0</span>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+
+    <div class="qtype" id="qType"></div>
+    <div class="question" id="qWord"></div>
+    <div class="qsub" id="qSub"></div>
+    <div style="text-align:center;margin-bottom:16px"><button class="speak hide" id="speakBtn">🔊 발음 듣기</button></div>
+
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="next-wrap hide" id="nextWrap">
+      <button class="btn btn-primary" id="nextBtn">다음 →</button>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn btn-ghost" id="quitBtn">그만두기</button>
+    </div>
+  </section>
+
+  <section id="result" class="card hide">
+    <div class="result-score" id="resultScore">0%</div>
+    <div class="result-sub" id="resultSub"></div>
+    <div id="reviewList"></div>
+    <div class="row">
+      <button class="btn btn-primary" id="againBtn">한 번 더</button>
+      <button class="btn btn-ghost" id="homeBtn">처음으로</button>
+    </div>
+  </section>
+
+  <footer>
+    토익 빈출 1200 · 기초 회화 1000 · 한글 맞춤법 300<br>
+    진행 상황은 이 브라우저에 자동 저장됩니다
+  </footer>
+</div>
+
+<script src="data-basic.js"></script>
+<script src="data-toeic.js"></script>
+<script src="data-spelling.js"></script>
+<script>
+const BASIC = window.BASIC||[], TOEIC = window.TOEIC||[], SPELLING = window.SPELLING||[];
+let cfg = {cat:"all", count:20};
+let queue = [], retry = [], idx = 0, score = 0, totalThisSession = 0, wrongs = [];
+let current = null;
+
+const $ = id => document.getElementById(id);
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+
+/* 분야별 개수 표시 */
+$("cntBasic").textContent = BASIC.length+"단어";
+$("cntToeic").textContent = TOEIC.length+"단어";
+$("cntSpelling").textContent = SPELLING.length+"문제";
+
+function bindOpts(containerId, key, parse){
+  const c = $(containerId);
+  c.querySelectorAll(".opt").forEach(o=>{
+    o.onclick = ()=>{
+      c.querySelectorAll(".opt").forEach(x=>x.classList.remove("active"));
+      o.classList.add("active");
+      cfg[key] = parse(o.dataset[key]);
+    };
+  });
+}
+bindOpts("catOpts","cat",v=>v);
+bindOpts("countOpts","count",v=>parseInt(v));
+
+/* 누적/연속 통계 */
+function loadStats(){
+  $("totalCorrect").textContent = parseInt(localStorage.getItem("es_total"))||0;
+  $("streak").textContent = parseInt(localStorage.getItem("es_streak"))||0;
+}
+function addTotal(n){
+  localStorage.setItem("es_total",(parseInt(localStorage.getItem("es_total"))||0)+n);
+}
+function markStreak(){
+  const today = new Date().toISOString().slice(0,10);
+  const last = localStorage.getItem("es_lastday");
+  if(last===today) return;
+  let s = parseInt(localStorage.getItem("es_streak"))||0;
+  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  s = (last===y) ? s+1 : 1;
+  localStorage.setItem("es_streak",s);
+  localStorage.setItem("es_lastday",today);
+}
+loadStats();
+
+/* 학습 세트 구성: 영어 단어는 {type:'word', w, ko}, 맞춤법은 {type:'spell-ko', ...} */
+function buildQueue(){
+  let pool = [];
+  const words = arr => arr.map(x=>({kind:"word", w:x.w, ko:x.ko}));
+  const spells = SPELLING.map(x=>({kind:"spellko", q:x.q, options:x.options, answer:x.answer, explain:x.explain}));
+  if(cfg.cat==="basic") pool = words(BASIC);
+  else if(cfg.cat==="toeic") pool = words(TOEIC);
+  else if(cfg.cat==="spelling") pool = spells;
+  else pool = [...words(BASIC), ...words(TOEIC), ...spells];
+  pool = shuffle(pool).slice(0, Math.min(cfg.count, pool.length));
+  return pool;
+}
+
+function show(sec){ ["setup","quiz","result"].forEach(s=>$(s).classList.toggle("hide", s!==sec)); }
+
+/* 영어단어: 출제 유형을 위치에 따라 자동 결정 (학습 효과: 뜻인지→재인→철자) */
+function wordQType(position){
+  const m = position % 3;
+  return m===0 ? "en2ko" : m===1 ? "ko2en" : "spell";
+}
+
+const allWords = [...BASIC, ...TOEIC];
+function wordDistractors(correctKey, key, n){
+  const cand = allWords.filter(x=>x[key]!==correctKey);
+  return shuffle(cand).slice(0,n);
+}
+function maskWord(w){
+  const arr = w.split("");
+  if(w.length<=3) return arr.map((c,i)=>i===0?c:"_").join("");
+  const blanks = Math.max(2, Math.floor(w.length/3));
+  const pick = shuffle(arr.map((_,i)=>i).filter(i=>i!==0 && /[a-zA-Z]/.test(arr[i]))).slice(0,blanks);
+  return arr.map((c,i)=>pick.includes(i)?"_":c).join("");
+}
+
+$("startBtn").onclick = ()=>{
+  queue = buildQueue(); retry = []; idx = 0; score = 0; totalThisSession = 0; wrongs = [];
+  markStreak(); loadStats();
+  show("quiz"); renderQ();
+};
+
+function renderQ(){
+  const item = queue[idx];
+  $("qProgress").textContent = `${idx+1} / ${queue.length}`;
+  $("qScore").textContent = `정답 ${score}`;
+  $("progressBar").style.width = (idx/queue.length*100)+"%";
+  $("feedback").textContent = ""; $("feedback").className = "feedback";
+  $("nextWrap").classList.add("hide");
+  $("speakBtn").classList.add("hide");
+  $("qSub").textContent = "";
+  $("choices").innerHTML = "";
+
+  let qLabel, qText, choices, correctVal, speakWord=null;
+
+  if(item.kind==="word"){
+    const type = wordQType(idx);
+    if(type==="en2ko"){
+      qLabel="뜻 맞히기 (영어 → 뜻)"; qText=item.w; correctVal=item.ko; speakWord=item.w;
+      choices = shuffle([item.ko, ...wordDistractors(item.ko,"ko",3).map(x=>x.ko)]);
+    } else if(type==="ko2en"){
+      qLabel="단어 맞히기 (뜻 → 영어)"; qText=item.ko; correctVal=item.w;
+      choices = shuffle([item.w, ...wordDistractors(item.w,"w",3).map(x=>x.w)]);
+    } else {
+      qLabel="철자 맞히기 (빈칸 채우기)"; qText=maskWord(item.w); correctVal=item.w;
+      $("qSub").textContent = "뜻: "+item.ko;
+      choices = shuffle([item.w, ...wordDistractors(item.w,"w",3).map(x=>x.w)]);
+    }
+  } else { // 맞춤법
+    qLabel="한글 맞춤법 — 올바른 것은?"; qText=item.q; correctVal=item.answer;
+    choices = shuffle([...item.options]);
+  }
+
+  $("qType").textContent = qLabel;
+  $("qWord").textContent = qText;
+  if(speakWord){ $("speakBtn").classList.remove("hide"); }
+  current = {item, correctVal, answered:false, speakWord};
+
+  choices.forEach(ch=>{
+    const b = document.createElement("div");
+    b.className="choice"; b.textContent=ch;
+    b.onclick = ()=>answer(b, ch);
+    $("choices").appendChild(b);
+  });
+}
+
+function answer(el, chosen){
+  if(current.answered) return;
+  current.answered = true;
+  totalThisSession++;
+  const ok = chosen===current.correctVal;
+  $("choices").querySelectorAll(".choice").forEach(c=>{
+    c.classList.add("disabled");
+    if(c.textContent===current.correctVal) c.classList.add("correct");
+  });
+  if(!ok) el.classList.add("wrong");
+
+  const fb = $("feedback");
+  if(ok){
+    score++; addTotal(1); loadStats();
+    fb.innerHTML = "정답입니다! 🎉";
+    fb.className = "feedback good";
+  } else {
+    fb.innerHTML = `오답! 정답: <b>${current.correctVal}</b>`;
+    fb.className = "feedback bad";
+    if(!retry.includes(current.item)) retry.push(current.item);
+    wrongs.push(current.item);
+  }
+  // 맞춤법 해설 표시
+  if(current.item.kind==="spellko" && current.item.explain){
+    fb.innerHTML += `<div class="explain">💡 ${current.item.explain}</div>`;
+  }
+  $("qScore").textContent = `정답 ${score}`;
+  $("nextWrap").classList.remove("hide");
+}
+
+$("speakBtn").onclick = ()=>{
+  if(!current||!current.speakWord) return;
+  try{
+    const u = new SpeechSynthesisUtterance(current.speakWord);
+    u.lang="en-US"; u.rate=.9; speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+};
+
+$("nextBtn").onclick = ()=>{
+  idx++;
+  if(idx>=queue.length){
+    if(retry.length>0){
+      // 틀린 문제 다시 출제
+      queue = shuffle(retry); retry = []; idx = 0;
+      alert("틀린 문제를 다시 풀어볼게요! ("+queue.length+"문제)");
+      renderQ();
+    } else finish();
+  } else renderQ();
+};
+
+$("quitBtn").onclick = ()=>{ if(confirm("학습을 그만둘까요?")) finish(); };
+
+function finish(){
+  show("result");
+  const pct = totalThisSession>0 ? Math.round(score/totalThisSession*100) : 0;
+  $("resultScore").textContent = pct+"%";
+  $("resultSub").textContent = `${totalThisSession}문제 중 ${score}문제 정답`;
+  // 중복 제거된 복습 목록
+  const seen = new Set(), uniq = [];
+  wrongs.forEach(x=>{
+    const key = x.kind==="word"?x.w:x.q;
+    if(!seen.has(key)){ seen.add(key); uniq.push(x); }
+  });
+  const rl = $("reviewList");
+  if(uniq.length===0){
+    rl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--good);font-weight:700">완벽해요! 틀린 문제가 없습니다 👏</div>`;
+  } else {
+    rl.innerHTML = `<h3 style="font-size:14px;color:var(--muted);margin:0 0 4px">복습할 문제 (${uniq.length})</h3>` +
+      uniq.map(x=> x.kind==="word"
+        ? `<div class="review-item"><span class="w">${x.w}</span><span class="m">${x.ko}</span></div>`
+        : `<div class="review-item"><span class="w">${x.answer}</span><span class="m">${x.explain||""}</span></div>`
+      ).join("");
+  }
+}
+
+$("againBtn").onclick = ()=>{ queue=buildQueue(); retry=[]; idx=0; score=0; totalThisSession=0; wrongs=[]; show("quiz"); renderQ(); };
+$("homeBtn").onclick = ()=>{ show("setup"); loadStats(); };
+</script>
+</body>
+</html>
