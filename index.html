@@ -7,15 +7,15 @@
 <meta name="description" content="토익 빈출 1200단어, 일상 회화 1000단어, 한글 맞춤법을 퀴즈로 반복 학습하세요.">
 <style>
   :root{
-    --bg:#0f172a; --card:#1e293b; --card2:#273449;
-    --accent:#38bdf8; --accent2:#818cf8;
-    --good:#22c55e; --bad:#ef4444; --text:#e2e8f0; --muted:#94a3b8;
-    --border:#334155;
+    --bg:#f7f8fa; --card:#ffffff; --card2:#f1f5f9;
+    --accent:#2563eb; --accent2:#4f46e5;
+    --good:#16a34a; --bad:#dc2626; --text:#1f2937; --muted:#6b7280;
+    --border:#e5e7eb;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{
     margin:0;font-family:"Noto Sans KR","Segoe UI",system-ui,sans-serif;
-    background:radial-gradient(1200px 600px at 50% -10%,#1e293b,#0f172a 60%);
+    background:var(--bg);
     color:var(--text);min-height:100vh;padding:16px;
   }
   .wrap{max-width:660px;margin:0 auto}
@@ -24,13 +24,13 @@
   header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
   header p{margin:6px 0 0;color:var(--muted);font-size:14px}
 
-  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 4px 20px rgba(15,23,42,.06)}
   .opt-group{margin-bottom:18px}
   .opt-group h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600}
   .opts{display:flex;gap:10px;flex-wrap:wrap}
   .opt{flex:1;min-width:130px;background:var(--card2);border:2px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:.15s;text-align:center}
   .opt:hover{border-color:var(--accent)}
-  .opt.active{border-color:var(--accent);background:rgba(56,189,248,.12)}
+  .opt.active{border-color:var(--accent);background:rgba(37,99,235,.07)}
   .opt b{display:block;font-size:15px}
   .opt small{color:var(--muted);font-size:12px}
 
@@ -76,10 +76,10 @@
   .loading{text-align:center;padding:40px;color:var(--muted)}
 
   /* 공부하기 (쇼츠형 카드) */
-  #study{position:fixed;inset:0;z-index:50;background:radial-gradient(1000px 600px at 50% 0%,#1e293b,#0f172a 70%);display:none;overflow:hidden;touch-action:none}
+  #study{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;overflow:hidden;touch-action:none}
   #study.on{display:block}
   .study-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px 18px;z-index:3;font-size:14px;color:var(--muted)}
-  .study-top button{background:rgba(255,255,255,.08);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 14px;font-size:14px;cursor:pointer}
+  .study-top button{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 14px;font-size:14px;cursor:pointer}
   .study-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px}
   .study-card{width:100%;max-width:560px;text-align:center;will-change:transform,opacity}
   .study-card .cat-tag{display:inline-block;font-size:13px;font-weight:700;color:#0f172a;background:linear-gradient(90deg,var(--accent),var(--accent2));padding:5px 14px;border-radius:99px;margin-bottom:28px}
@@ -88,7 +88,7 @@
   .study-card .sc-divider{width:64px;height:3px;background:var(--border);border-radius:99px;margin:26px auto}
   .study-card .sc-mean{font-size:26px;font-weight:700;color:var(--accent);line-height:1.4;word-break:keep-all}
   .study-card .sc-extra{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6}
-  .study-card .sc-speak{margin-top:26px;background:rgba(56,189,248,.12);border:1px solid var(--accent);color:var(--accent);border-radius:12px;padding:10px 20px;font-size:15px;cursor:pointer}
+  .study-card .sc-speak{margin-top:26px;background:rgba(37,99,235,.07);border:1px solid var(--accent);color:var(--accent);border-radius:12px;padding:10px 20px;font-size:15px;cursor:pointer}
   .study-hint{position:absolute;bottom:26px;left:0;right:0;text-align:center;color:var(--muted);font-size:13px;z-index:3;animation:bob 1.6s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0);opacity:.65}50%{transform:translateY(-6px);opacity:1}}
   .sc-in-up{animation:scInUp .35s cubic-bezier(.22,1,.36,1)}
