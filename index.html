@@ -48,6 +48,9 @@
   .question{font-size:30px;font-weight:800;text-align:center;margin:6px 0 4px;letter-spacing:-.5px;word-break:break-word;line-height:1.3}
   .qsub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:20px;min-height:18px}
   .choices{display:grid;gap:12px}
+  .choices.letters{grid-template-columns:repeat(4,1fr)}
+  .choices.letters .choice{text-align:center;font-size:24px;font-weight:800;padding:18px 0;letter-spacing:1px}
+  .question .blank{color:var(--accent);border-bottom:4px solid var(--accent);padding:0 6px;margin:0 2px;border-radius:3px}
   .choice{background:var(--card2);border:2px solid var(--border);border-radius:12px;padding:16px;font-size:16px;cursor:pointer;transition:.12s;text-align:left}
   .choice:hover{border-color:var(--accent)}
   .choice.correct{border-color:var(--good);background:rgba(34,197,94,.15)}
@@ -96,6 +99,8 @@
   @keyframes scInUp{from{transform:translateY(70%);opacity:0}to{transform:translateY(0);opacity:1}}
   @keyframes scInDown{from{transform:translateY(-70%);opacity:0}to{transform:translateY(0);opacity:1}}
   .study-progress{position:absolute;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:4;transition:width .3s}
+  #toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:12px 22px;border-radius:99px;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:.3s;z-index:100}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -111,6 +116,8 @@
       <div class="opts" id="catOpts">
         <div class="opt active" data-cat="all"><b>전체 섞기</b><small>영어+맞춤법</small></div>
         <div class="opt" data-cat="basic"><b>기초 회화</b><small id="cntBasic">단어</small></div>
+        <div class="opt" data-cat="inter"><b>중급 회화</b><small id="cntInter">단어</small></div>
+        <div class="opt" data-cat="adv"><b>고급 회화</b><small id="cntAdv">단어</small></div>
         <div class="opt" data-cat="toeic"><b>토익 빈출</b><small id="cntToeic">단어</small></div>
         <div class="opt" data-cat="spelling"><b>한글 맞춤법</b><small id="cntSpelling">문제</small></div>
       </div>
@@ -181,26 +188,37 @@
     <div class="study-hint" id="studyHint">⬆ 위로 스와이프 · 클릭 · ↑↓ 키로 넘기기</div>
   </div>
 
+  <div id="toast"></div>
+
   <footer>
-    토익 빈출 1200 · 기초 회화 1000 · 한글 맞춤법 300<br>
+    기초·중급·고급 회화 · 토익 빈출 · 한글 맞춤법<br>
     진행 상황은 이 브라우저에 자동 저장됩니다
   </footer>
 </div>
 
 <script src="data-basic.js"></script>
+<script src="data-intermediate.js"></script>
+<script src="data-advanced.js"></script>
 <script src="data-toeic.js"></script>
 <script src="data-spelling.js"></script>
 <script>
-const BASIC = window.BASIC||[], TOEIC = window.TOEIC||[], SPELLING = window.SPELLING||[];
+const BASIC = window.BASIC||[], INTER = window.INTER||[], ADV = window.ADV||[], TOEIC = window.TOEIC||[], SPELLING = window.SPELLING||[];
 let cfg = {cat:"all", count:20};
 let queue = [], retry = [], idx = 0, score = 0, totalThisSession = 0, wrongs = [];
 let current = null;
 
 const $ = id => document.getElementById(id);
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+let toastTimer=null;
+function showToast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
+}
 
 /* 분야별 개수 표시 */
 $("cntBasic").textContent = BASIC.length+"단어";
+$("cntInter").textContent = INTER.length+"단어";
+$("cntAdv").textContent = ADV.length+"단어";
 $("cntToeic").textContent = TOEIC.length+"단어";
 $("cntSpelling").textContent = SPELLING.length+"문제";
 
@@ -243,9 +261,11 @@ function buildQueue(){
   const words = arr => arr.map(x=>({kind:"word", w:x.w, ko:x.ko}));
   const spells = SPELLING.map(x=>({kind:"spellko", q:x.q, options:x.options, answer:x.answer, explain:x.explain}));
   if(cfg.cat==="basic") pool = words(BASIC);
+  else if(cfg.cat==="inter") pool = words(INTER);
+  else if(cfg.cat==="adv") pool = words(ADV);
   else if(cfg.cat==="toeic") pool = words(TOEIC);
   else if(cfg.cat==="spelling") pool = spells;
-  else pool = [...words(BASIC), ...words(TOEIC), ...spells];
+  else pool = [...words(BASIC), ...words(INTER), ...words(ADV), ...words(TOEIC), ...spells];
   pool = shuffle(pool).slice(0, Math.min(cfg.count, pool.length));
   return pool;
 }
@@ -258,17 +278,44 @@ function wordQType(position){
   return m===0 ? "en2ko" : m===1 ? "ko2en" : "spell";
 }
 
-const allWords = [...BASIC, ...TOEIC];
-function wordDistractors(correctKey, key, n){
-  const cand = allWords.filter(x=>x[key]!==correctKey);
-  return shuffle(cand).slice(0,n);
+const allWords = [...BASIC, ...INTER, ...ADV, ...TOEIC];
+/* 중복 없는 오답 보기 n개 (보여지는 값 기준으로 중복 제거) */
+function wordDistractors(correctVal, key, n){
+  const seen = new Set([correctVal]);
+  const out = [];
+  for(const x of shuffle(allWords)){
+    const v = x[key];
+    if(seen.has(v)) continue;
+    seen.add(v); out.push(v);
+    if(out.length>=n) break;
+  }
+  return out;
 }
-function maskWord(w){
-  const arr = w.split("");
-  if(w.length<=3) return arr.map((c,i)=>i===0?c:"_").join("");
-  const blanks = Math.max(2, Math.floor(w.length/3));
-  const pick = shuffle(arr.map((_,i)=>i).filter(i=>i!==0 && /[a-zA-Z]/.test(arr[i]))).slice(0,blanks);
-  return arr.map((c,i)=>pick.includes(i)?"_":c).join("");
+/* 알파벳 한 글자만 비우는 철자 문제 */
+function isSpellable(w){ return /^[a-z]{4,}$/i.test(w); }
+function maskOneLetter(w){
+  const lower = w;
+  // 첫 글자 제외한 위치 중 하나를 비움
+  const idxs = [];
+  for(let i=1;i<lower.length;i++){ if(/[a-z]/i.test(lower[i])) idxs.push(i); }
+  const pos = idxs[Math.floor(Math.random()*idxs.length)];
+  const letter = lower[pos];
+  const masked = lower.split("").map((c,i)=> i===pos ? "▢" : c).join("");
+  return {masked, letter, pos};
+}
+/* 정답 글자 + 서로 다른 오답 알파벳 보기 */
+function letterChoices(correct, n){
+  const lower = correct.toLowerCase();
+  const isUpper = correct !== lower;
+  const seen = new Set([lower]);
+  const pool = "abcdefghijklmnopqrstuvwxyz".split("");
+  const out = [];
+  for(const c of shuffle(pool)){
+    if(seen.has(c)) continue;
+    seen.add(c); out.push(isUpper ? c.toUpperCase() : c);
+    if(out.length>=n) break;
+  }
+  return out;
 }
 
 $("startBtn").onclick = ()=>{
@@ -288,20 +335,25 @@ function renderQ(){
   $("qSub").textContent = "";
   $("choices").innerHTML = "";
 
-  let qLabel, qText, choices, correctVal, speakWord=null;
+  let qLabel, qText, choices, correctVal, speakWord=null, isLetter=false;
 
   if(item.kind==="word"){
-    const type = wordQType(idx);
+    let type = wordQType(idx);
+    // 철자 문제는 한 단어(공백·하이픈 없는 4글자 이상)에만 적용, 아니면 뜻 맞히기로 대체
+    if(type==="spell" && !isSpellable(item.w)) type = (idx%2===0) ? "en2ko" : "ko2en";
+
     if(type==="en2ko"){
       qLabel="뜻 맞히기 (영어 → 뜻)"; qText=item.w; correctVal=item.ko; speakWord=item.w;
-      choices = shuffle([item.ko, ...wordDistractors(item.ko,"ko",3).map(x=>x.ko)]);
+      choices = shuffle([item.ko, ...wordDistractors(item.ko,"ko",3)]);
     } else if(type==="ko2en"){
       qLabel="단어 맞히기 (뜻 → 영어)"; qText=item.ko; correctVal=item.w;
-      choices = shuffle([item.w, ...wordDistractors(item.w,"w",3).map(x=>x.w)]);
-    } else {
-      qLabel="철자 맞히기 (빈칸 채우기)"; qText=maskWord(item.w); correctVal=item.w;
-      $("qSub").textContent = "뜻: "+item.ko;
-      choices = shuffle([item.w, ...wordDistractors(item.w,"w",3).map(x=>x.w)]);
+      choices = shuffle([item.w, ...wordDistractors(item.w,"w",3)]);
+    } else { // spell — 빈칸에 들어갈 알파벳 고르기
+      const m = maskOneLetter(item.w);
+      qLabel="철자 맞히기 (빈칸에 들어갈 알파벳은?)"; qText=m.masked; correctVal=m.letter;
+      isLetter=true; speakWord=item.w;
+      $("qSub").innerHTML = `뜻: ${item.ko}`;
+      choices = shuffle([m.letter, ...letterChoices(m.letter,3)]);
     }
   } else { // 맞춤법
     qLabel="한글 맞춤법 — 올바른 것은?"; qText=item.q; correctVal=item.answer;
@@ -309,9 +361,11 @@ function renderQ(){
   }
 
   $("qType").textContent = qLabel;
-  $("qWord").textContent = qText;
-  if(speakWord){ $("speakBtn").classList.remove("hide"); }
-  current = {item, correctVal, answered:false, speakWord};
+  if(isLetter){ $("qWord").innerHTML = qText.replace("▢", '<span class="blank">▢</span>'); }
+  else { $("qWord").textContent = qText; }
+  $("choices").classList.toggle("letters", isLetter);
+  if(speakWord && !isLetter){ $("speakBtn").classList.remove("hide"); }
+  current = {item, correctVal, answered:false, speakWord, isLetter, fullWord:item.w};
 
   choices.forEach(ch=>{
     const b = document.createElement("div");
@@ -332,13 +386,18 @@ function answer(el, chosen){
   });
   if(!ok) el.classList.add("wrong");
 
+  // 철자 문제는 전체 단어도 함께 안내
+  const answerLabel = current.isLetter
+    ? `<b>${current.correctVal}</b> → ${current.fullWord}`
+    : `<b>${current.correctVal}</b>`;
+
   const fb = $("feedback");
   if(ok){
     score++; addTotal(1); loadStats();
-    fb.innerHTML = "정답입니다! 🎉";
+    fb.innerHTML = current.isLetter ? `정답! 🎉 ${current.fullWord}` : "정답입니다! 🎉";
     fb.className = "feedback good";
   } else {
-    fb.innerHTML = `오답! 정답: <b>${current.correctVal}</b>`;
+    fb.innerHTML = `오답! 정답: ${answerLabel}`;
     fb.className = "feedback bad";
     if(!retry.includes(current.item)) retry.push(current.item);
     wrongs.push(current.item);
@@ -365,7 +424,7 @@ $("nextBtn").onclick = ()=>{
     if(retry.length>0){
       // 틀린 문제 다시 출제
       queue = shuffle(retry); retry = []; idx = 0;
-      alert("틀린 문제를 다시 풀어볼게요! ("+queue.length+"문제)");
+      showToast("📌 틀린 문제 "+queue.length+"개를 다시 풀어볼게요!");
       renderQ();
     } else finish();
   } else renderQ();
@@ -403,14 +462,15 @@ $("homeBtn").onclick = ()=>{ show("setup"); loadStats(); };
 let studyDeck = [], studyIdx = 0, studyActive = false;
 
 function buildStudyDeck(){
-  const tag = c => c==="basic"?"기초 회화":c==="toeic"?"토익 빈출":"한글 맞춤법";
   const wcards = (arr, t) => arr.map(x=>({word:x.w, mean:x.ko, speak:x.w, tag:t}));
   const scards = SPELLING.map(x=>({word:x.answer, mean:"올바른 표기", extra:x.explain, tag:"한글 맞춤법"}));
   let d;
   if(cfg.cat==="basic") d = wcards(BASIC,"기초 회화");
+  else if(cfg.cat==="inter") d = wcards(INTER,"중급 회화");
+  else if(cfg.cat==="adv") d = wcards(ADV,"고급 회화");
   else if(cfg.cat==="toeic") d = wcards(TOEIC,"토익 빈출");
   else if(cfg.cat==="spelling") d = scards;
-  else d = [...wcards(BASIC,"기초 회화"), ...wcards(TOEIC,"토익 빈출"), ...scards];
+  else d = [...wcards(BASIC,"기초 회화"), ...wcards(INTER,"중급 회화"), ...wcards(ADV,"고급 회화"), ...wcards(TOEIC,"토익 빈출"), ...scards];
   return shuffle(d);
 }
 
