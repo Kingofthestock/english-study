@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>두뇌 훈련 | 지능 트레이닝</title>
+<meta name="description" content="숫자 기억, 순간 암산, 규칙 찾기, 스트룹, 짝 맞추기 등 두뇌를 훈련하는 미니게임 모음.">
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --card2:#f1f5f9;
+    --accent:#2563eb; --accent2:#4f46e5;
+    --good:#16a34a; --bad:#dc2626; --text:#1f2937; --muted:#6b7280;
+    --border:#e5e7eb;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:"Noto Sans KR","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+  .wrap{max-width:660px;margin:0 auto}
+  header{text-align:center;padding:18px 0 6px}
+  header h1{margin:0;font-size:26px;letter-spacing:-.5px}
+  header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .back{display:inline-block;margin:6px 0 14px;color:var(--muted);text-decoration:none;font-size:14px}
+  .back:hover{color:var(--accent)}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 4px 20px rgba(15,23,42,.06)}
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;color:#fff}
+  .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+  .btn:active{transform:scale(.98)}
+  .hide{display:none}
+
+  /* 게임 목록 */
+  .game-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .game-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:.15s;box-shadow:0 4px 16px rgba(15,23,42,.05)}
+  .game-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .game-card .ico{font-size:34px}
+  .game-card .nm{font-weight:800;font-size:17px;margin-top:8px}
+  .game-card .ds{color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.45;min-height:36px}
+  .game-card .bs{margin-top:10px;font-size:12px;color:var(--accent);font-weight:700}
+  .skill-tag{display:inline-block;font-size:11px;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:99px;padding:2px 8px;margin-top:8px}
+
+  /* 게임 공통 */
+  .stage-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .stage-top .ttl{font-weight:800;font-size:18px}
+  .stage-top .best{font-size:13px;color:var(--muted)}
+  .mini-back{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer}
+  .center{text-align:center}
+  .muted{color:var(--muted)}
+  .lead{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 18px}
+
+  .hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;font-weight:700}
+  .hud .score{color:var(--accent)}
+  .timer{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin-bottom:18px}
+  .timer > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:100%;transition:width .25s linear}
+
+  .prompt{font-size:40px;font-weight:900;text-align:center;letter-spacing:-1px;margin:10px 0 22px;min-height:52px;word-break:keep-all}
+  .choices2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .choice{background:var(--card2);border:2px solid var(--border);border-radius:14px;padding:18px;font-size:20px;font-weight:800;cursor:pointer;transition:.1s;text-align:center}
+  .choice:hover{border-color:var(--accent)}
+  .choice.correct{border-color:var(--good);background:rgba(22,163,74,.12);color:var(--good)}
+  .choice.wrong{border-color:var(--bad);background:rgba(220,38,38,.12);color:var(--bad)}
+  .flash{text-align:center;font-weight:800;min-height:24px;margin-top:14px}
+
+  /* 숫자 기억 */
+  .big-number{font-size:64px;font-weight:900;text-align:center;letter-spacing:10px;margin:18px 0;min-height:80px;color:var(--accent)}
+  .digit-display{font-size:40px;font-weight:900;text-align:center;letter-spacing:8px;min-height:52px;margin:6px 0 16px}
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto}
+  .key{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px 0;font-size:22px;font-weight:800;cursor:pointer;transition:.1s}
+  .key:hover{border-color:var(--accent)}
+  .key:active{transform:scale(.95)}
+
+  /* 짝 맞추기 */
+  .match-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:360px;margin:0 auto}
+  .tile{aspect-ratio:1;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;user-select:none;transition:transform .15s, background .2s;color:#fff}
+  .tile.flipped{background:var(--card2)}
+  .tile.matched{background:rgba(22,163,74,.15);cursor:default}
+  .tile .face{opacity:0}
+  .tile.flipped .face,.tile.matched .face{opacity:1}
+
+  /* 결과 */
+  .result-big{font-size:48px;font-weight:900;text-align:center;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .result-sub{text-align:center;color:var(--muted);margin:6px 0 18px}
+  .newbest{text-align:center;color:var(--good);font-weight:800;margin-bottom:14px}
+  .row{display:flex;gap:12px}
+  .row .btn{margin:0}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>🧠 두뇌 훈련</span></h1>
+    <p>매일 조금씩, 기억력·집중력·순발력을 키워요</p>
+  </header>
+  <div class="center"><a class="back" href="index.html">← 영어·맞춤법 학습으로</a></div>
+
+  <!-- 게임 목록 -->
+  <section id="hub">
+    <div class="game-grid" id="gameGrid"></div>
+    <p class="center muted" style="font-size:12px;margin-top:16px">최고 기록은 이 브라우저에 자동 저장됩니다</p>
+  </section>
+
+  <!-- 게임 진행 영역 -->
+  <section id="stage" class="card hide"></section>
+
+  <footer>두뇌 훈련은 재미로 즐기세요 — 꾸준함이 가장 좋은 트레이닝입니다 💪</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+const rnd = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+const fmtTime = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+
+/* 최고 기록 저장 (높을수록 좋은 게임 / 낮을수록 좋은 게임 구분) */
+function getBest(key){ const v=localStorage.getItem("bt_"+key); return v===null?null:Number(v); }
+function setBest(key,val,lowerBetter){
+  const cur=getBest(key);
+  if(cur===null || (lowerBetter?val<cur:val>cur)){ localStorage.setItem("bt_"+key,val); return true; }
+  return false;
+}
+
+/* 게임 정의 */
+const GAMES = [
+  {id:"digit", ico:"🔢", nm:"숫자 기억", ds:"점점 길어지는 숫자를 외워서 입력! 작업 기억력 훈련.", skill:"작업 기억", unit:"자리", lowerBetter:false},
+  {id:"math",  ico:"➗", nm:"순간 암산", ds:"60초 안에 사칙연산을 최대한 많이! 계산 속도 훈련.", skill:"연산 속도", unit:"문제", lowerBetter:false},
+  {id:"seq",   ico:"📈", nm:"규칙 찾기", ds:"숫자 배열의 다음 수를 추리하기. 논리·추론력 훈련.", skill:"논리 추론", unit:"문제", lowerBetter:false},
+  {id:"stroop",ico:"🎨", nm:"색깔 맞히기", ds:"글자 '뜻'이 아닌 '색'을 고르기! 집중·억제력 훈련(스트룹).", skill:"집중·억제", unit:"개", lowerBetter:false},
+  {id:"match", ico:"🃏", nm:"짝 맞추기", ds:"카드를 뒤집어 같은 그림 짝 찾기. 시각 기억력 훈련.", skill:"시각 기억", unit:"초", lowerBetter:true},
+];
+
+let cleanup = null; // 현재 게임의 타이머/리스너 정리 함수
+
+function renderHub(){
+  if(cleanup){ cleanup(); cleanup=null; }
+  $("stage").classList.add("hide");
+  $("hub").classList.remove("hide");
+  const grid = $("gameGrid"); grid.innerHTML="";
+  GAMES.forEach(g=>{
+    const best=getBest(g.id);
+    const bestTxt = best===null ? "기록 없음"
+      : g.id==="match" ? `최고: ${fmtTime(best)}` : `최고: ${best}${g.unit}`;
+    const c = el("div","game-card");
+    c.innerHTML = `<div class="ico">${g.ico}</div><div class="nm">${g.nm}</div>
+      <div class="ds">${g.ds}</div><span class="skill-tag">${g.skill}</span>
+      <div class="bs">🏆 ${bestTxt}</div>`;
+    c.onclick = ()=>openGame(g.id);
+    grid.appendChild(c);
+  });
+}
+
+function openGame(id){
+  if(cleanup){ cleanup(); cleanup=null; }
+  $("hub").classList.add("hide");
+  const s=$("stage"); s.classList.remove("hide"); s.innerHTML="";
+  ({digit:gameDigit, math:gameMath, seq:gameSeq, stroop:gameStroop, match:gameMatch})[id]();
+}
+
+function stageHeader(g){
+  const top=el("div","stage-top");
+  const back=el("button","mini-back","← 목록"); back.onclick=renderHub;
+  const best=getBest(g.id);
+  const bestTxt = best===null?"":(g.id==="match"?`🏆 ${fmtTime(best)}`:`🏆 ${best}${g.unit}`);
+  top.appendChild(back);
+  top.appendChild(el("div","ttl",`${g.ico} ${g.nm}`));
+  top.appendChild(el("div","best",bestTxt));
+  return top;
+}
+
+function showResult(g, scoreVal, scoreText, isBest, retryFn){
+  const s=$("stage"); s.innerHTML="";
+  s.appendChild(stageHeader(g));
+  s.appendChild(el("div","result-big",scoreText));
+  s.appendChild(el("div","result-sub", g.id==="match"?"걸린 시간":"이번 점수"));
+  if(isBest) s.appendChild(el("div","newbest","🎉 최고 기록 갱신!"));
+  const row=el("div","row");
+  const again=el("button","btn btn-primary","다시 하기"); again.onclick=retryFn;
+  const list=el("button","btn btn-ghost","목록으로"); list.onclick=renderHub;
+  row.appendChild(again); row.appendChild(list);
+  s.appendChild(row);
+}
+
+/* ========== 1) 숫자 기억 (Digit Span) ========== */
+function gameDigit(){
+  const g=GAMES[0];
+  let level=3, seq=[], typed="";
+  const s=$("stage");
+  function round(){
+    s.innerHTML=""; s.appendChild(stageHeader(g));
+    s.appendChild(el("div","hud",`<span>${level}자리</span><span class="score">레벨 ${level-2}</span>`));
+    seq=Array.from({length:level},()=>rnd(0,9));
+    const big=el("div","big-number",seq.join(""));
+    s.appendChild(big);
+    s.appendChild(el("p","center muted","숫자를 외우세요!"));
+    const dur = 700*level + 500;
+    const tm = el("div","timer",'<div></div>'); s.appendChild(tm);
+    requestAnimationFrame(()=>{ tm.firstChild.style.transition=`width ${dur}ms linear`; tm.firstChild.style.width="0%"; });
+    const t=setTimeout(recall, dur);
+    cleanup=()=>clearTimeout(t);
+  }
+  function recall(){
+    typed="";
+    s.innerHTML=""; s.appendChild(stageHeader(g));
+    s.appendChild(el("div","hud",`<span>${level}자리</span><span class="score">레벨 ${level-2}</span>`));
+    s.appendChild(el("p","center muted","외운 숫자를 입력하세요"));
+    const disp=el("div","digit-display","_".repeat(level)); s.appendChild(disp);
+    const pad=el("div","keypad");
+    const keys=["1","2","3","4","5","6","7","8","9","⌫","0","✓"];
+    keys.forEach(k=>{
+      const b=el("div","key",k);
+      b.onclick=()=>{
+        if(k==="⌫"){ typed=typed.slice(0,-1); }
+        else if(k==="✓"){ submit(); return; }
+        else if(typed.length<level){ typed+=k; }
+        disp.textContent = typed.padEnd(level,"_");
+        if(typed.length===level) submit();
+      };
+      pad.appendChild(b);
+    });
+    s.appendChild(pad);
+    cleanup=null;
+  }
+  function submit(){
+    const ans=seq.join("");
+    if(typed===ans){
+      level++;
+      const note=el("div","flash","✅ 정답! 다음 단계"); note.style.color="var(--good)";
+      s.appendChild(note);
+      const t=setTimeout(round,700); cleanup=()=>clearTimeout(t);
+    } else {
+      const reached=level-1; // 마지막으로 성공한 자리수
+      const isBest=setBest(g.id, reached>=2?reached:0, false);
+      const t=setTimeout(()=>showResult(g, reached, `${reached}자리`, isBest, gameDigit),300);
+      cleanup=()=>clearTimeout(t);
+    }
+  }
+  round();
+}
+
+/* ========== 2) 순간 암산 (Mental Math) ========== */
+function gameMath(){
+  const g=GAMES[1];
+  let score=0, left=60, q=null, timer=null;
+  const s=$("stage");
+  function gen(){
+    const ops=["+","-","×"]; const op=ops[rnd(0,2)];
+    let a,b,ans;
+    if(op==="+"){ a=rnd(2,59); b=rnd(2,59); ans=a+b; }
+    else if(op==="-"){ a=rnd(10,80); b=rnd(1,a-1); ans=a-b; }
+    else { a=rnd(2,12); b=rnd(2,12); ans=a*b; }
+    const set=new Set([ans]); const ch=[ans];
+    while(ch.length<4){ const d=ans+rnd(-9,9); if(d>=0 && !set.has(d)){ set.add(d); ch.push(d); } }
+    return {text:`${a} ${op} ${b}`, ans, choices:shuffle(ch)};
+  }
+  function paint(){
+    s.innerHTML=""; s.appendChild(stageHeader(g));
+    s.appendChild(el("div","hud",`<span>⏱ ${left}s</span><span class="score">${score}문제</span>`));
+    const tm=el("div","timer",'<div></div>'); tm.firstChild.style.width=(left/60*100)+"%"; s.appendChild(tm);
+    q=gen();
+    s.appendChild(el("div","prompt",q.text+" = ?"));
+    const grid=el("div","choices2");
+    q.choices.forEach(c=>{
+      const b=el("div","choice",c);
+      b.onclick=()=>{
+        if(c===q.ans){ score++; b.classList.add("correct"); }
+        else { b.classList.add("wrong"); }
+        setTimeout(next,180);
+      };
+      grid.appendChild(b);
+    });
+    s.appendChild(grid);
+  }
+  function next(){ if(left<=0) return; paint(); }
+  paint();
+  timer=setInterval(()=>{
+    left--;
+    const bar=s.querySelector(".timer>div"); if(bar) bar.style.width=(left/60*100)+"%";
+    const hud=s.querySelector(".hud span"); if(hud) hud.textContent=`⏱ ${left}s`;
+    if(left<=0){
+      clearInterval(timer);
+      const isBest=setBest(g.id,score,false);
+      showResult(g,score,`${score}문제`,isBest,gameMath);
+    }
+  },1000);
+  cleanup=()=>clearInterval(timer);
+}
+
+/* ========== 3) 규칙 찾기 (Number Sequence) ========== */
+function gameSeq(){
+  const g=GAMES[2];
+  let score=0, left=60, q=null, timer=null;
+  const s=$("stage");
+  function gen(){
+    const type=rnd(0,3); let arr=[], ans;
+    if(type===0){ const st=rnd(1,9), d=rnd(2,9); arr=[st,st+d,st+2*d,st+3*d]; ans=st+4*d; }       // 등차
+    else if(type===1){ const st=rnd(1,4), r=rnd(2,3); arr=[st,st*r,st*r*r,st*r*r*r]; ans=st*r*r*r*r; } // 등비
+    else if(type===2){ let a=rnd(1,5),b=rnd(2,7); arr=[a,b,a+b,b+(a+b)]; ans=(a+b)+(b+a+b); }       // 피보나치형
+    else { const st=rnd(1,6); arr=[st*st,(st+1)*(st+1),(st+2)*(st+2),(st+3)*(st+3)]; ans=(st+4)*(st+4); } // 제곱
+    const set=new Set([ans]); const ch=[ans];
+    while(ch.length<4){ const off=[ -1,1,2,-2,3,-3, ans>10?rnd(-6,6):rnd(-3,3)][rnd(0,6)]; const d=ans+off; if(d>0 && !set.has(d)){ set.add(d); ch.push(d); } }
+    return {seq:arr, ans, choices:shuffle(ch)};
+  }
+  function paint(){
+    s.innerHTML=""; s.appendChild(stageHeader(g));
+    s.appendChild(el("div","hud",`<span>⏱ ${left}s</span><span class="score">${score}문제</span>`));
+    const tm=el("div","timer",'<div></div>'); tm.firstChild.style.width=(left/60*100)+"%"; s.appendChild(tm);
+    q=gen();
+    s.appendChild(el("div","prompt", q.seq.join(", ")+", ?"));
+    const grid=el("div","choices2");
+    q.choices.forEach(c=>{
+      const b=el("div","choice",c);
+      b.onclick=()=>{ if(c===q.ans){ score++; b.classList.add("correct"); } else b.classList.add("wrong"); setTimeout(next,220); };
+      grid.appendChild(b);
+    });
+    s.appendChild(grid);
+  }
+  function next(){ if(left<=0) return; paint(); }
+  paint();
+  timer=setInterval(()=>{
+    left--;
+    const bar=s.querySelector(".timer>div"); if(bar) bar.style.width=(left/60*100)+"%";
+    const hud=s.querySelector(".hud span"); if(hud) hud.textContent=`⏱ ${left}s`;
+    if(left<=0){ clearInterval(timer); const isBest=setBest(g.id,score,false); showResult(g,score,`${score}문제`,isBest,gameSeq); }
+  },1000);
+  cleanup=()=>clearInterval(timer);
+}
+
+/* ========== 4) 색깔 맞히기 (Stroop) ========== */
+function gameStroop(){
+  const g=GAMES[3];
+  const COLORS=[{n:"빨강",h:"#e11d48"},{n:"파랑",h:"#2563eb"},{n:"초록",h:"#16a34a"},{n:"주황",h:"#ea580c"},{n:"보라",h:"#7c3aed"}];
+  let score=0, left=60, ink=null, timer=null;
+  const s=$("stage");
+  function paint(){
+    s.innerHTML=""; s.appendChild(stageHeader(g));
+    s.appendChild(el("div","hud",`<span>⏱ ${left}s</span><span class="score">${score}개</span>`));
+    const tm=el("div","timer",'<div></div>'); tm.firstChild.style.width=(left/60*100)+"%"; s.appendChild(tm);
+    s.appendChild(el("p","center muted","글자의 <b>뜻</b>이 아니라 글자의 <b>색깔</b>을 고르세요!"));
+    const word=COLORS[rnd(0,COLORS.length-1)];
+    do { ink=COLORS[rnd(0,COLORS.length-1)]; } while(Math.random()<0.75 && ink.n===word.n); // 75% 불일치 유도
+    const p=el("div","prompt",word.n); p.style.color=ink.h; s.appendChild(p);
+    const grid=el("div","choices2");
+    shuffle(COLORS).forEach(c=>{
+      const b=el("div","choice",c.n);
+      b.onclick=()=>{ if(c.n===ink.n){ score++; b.classList.add("correct"); } else b.classList.add("wrong"); setTimeout(next,160); };
+      grid.appendChild(b);
+    });
+    s.appendChild(grid);
+  }
+  function next(){ if(left<=0) return; paint(); }
+  paint();
+  timer=setInterval(()=>{
+    left--;
+    const bar=s.querySelector(".timer>div"); if(bar) bar.style.width=(left/60*100)+"%";
+    const hud=s.querySelector(".hud span"); if(hud) hud.textContent=`⏱ ${left}s`;
+    if(left<=0){ clearInterval(timer); const isBest=setBest(g.id,score,false); showResult(g,score,`${score}개`,isBest,gameStroop); }
+  },1000);
+  cleanup=()=>clearInterval(timer);
+}
+
+/* ========== 5) 짝 맞추기 (Memory Match) ========== */
+function gameMatch(){
+  const g=GAMES[4];
+  const POOL=["🍎","🚀","🐱","🌟","🎵","⚽","🌈","🍕","🐶","🌻","🎈","🍩"];
+  const picks=shuffle(POOL).slice(0,8);
+  let deck=shuffle([...picks,...picks]);
+  let first=null, lock=false, matched=0, moves=0, sec=0, timer=null;
+  const s=$("stage");
+  s.innerHTML=""; s.appendChild(stageHeader(g));
+  const hud=el("div","hud",`<span>⏱ 0:00</span><span class="score">0쌍</span>`); s.appendChild(hud);
+  s.appendChild(el("p","center muted","같은 그림 카드 8쌍을 모두 찾으세요"));
+  const grid=el("div","match-grid"); s.appendChild(grid);
+  const tiles=[];
+  deck.forEach((emo,i)=>{
+    const t=el("div","tile",`<span class="face">${emo}</span>`);
+    t.dataset.emo=emo; t.dataset.i=i;
+    t.onclick=()=>flip(t);
+    grid.appendChild(t); tiles.push(t);
+  });
+  timer=setInterval(()=>{ sec++; hud.children[0].textContent=`⏱ ${fmtTime(sec)}`; },1000);
+  cleanup=()=>clearInterval(timer);
+
+  function flip(t){
+    if(lock || t.classList.contains("flipped") || t.classList.contains("matched")) return;
+    t.classList.add("flipped");
+    if(!first){ first=t; return; }
+    moves++;
+    if(first.dataset.emo===t.dataset.emo){
+      first.classList.add("matched"); t.classList.add("matched");
+      first=null; matched++;
+      hud.children[1].textContent=`${matched}쌍`;
+      if(matched===8) finish();
+    } else {
+      lock=true; const a=first, b=t; first=null;
+      setTimeout(()=>{ a.classList.remove("flipped"); b.classList.remove("flipped"); lock=false; },700);
+    }
+  }
+  function finish(){
+    clearInterval(timer);
+    const isBest=setBest(g.id, sec, true);
+    setTimeout(()=>showResult(g, sec, fmtTime(sec), isBest, gameMatch),400);
+  }
+}
+
+renderHub();
+</script>
+</body>
+</html>
