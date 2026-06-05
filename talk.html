@@ -102,6 +102,10 @@
   <!-- 홈 -->
   <section id="home" class="card">
     <div class="opt-group">
+      <h3>난이도</h3>
+      <div class="chips" id="levelChips"></div>
+    </div>
+    <div class="opt-group">
       <h3>상황 선택</h3>
       <div class="chips" id="sceneChips"></div>
     </div>
@@ -152,11 +156,12 @@
 
 <script src="data-talk.js"></script>
 <script>
-const PHRASES = window.PHRASES||[], DIALOGS = window.DIALOGS||[], SCENES = window.SCENES||{};
+const PHRASES = window.PHRASES||[], DIALOGS = window.DIALOGS||[], SCENES = window.SCENES||{}, LEVELS = window.LEVELS||{1:"기초",2:"중급",3:"고급"};
 const $ = id => document.getElementById(id);
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
 
+let level = "all";
 let scene = "all";
 let toastTimer=null;
 function showToast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
@@ -165,24 +170,43 @@ function speak(text){
   try{ const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=.92; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){}
 }
 
+/* 난이도 칩 */
+(function buildLevelChips(){
+  const wrap=$("levelChips");
+  const add=(key,label)=>{ const c=el("div","chip"+(key==="all"?" active":""),label); c.onclick=()=>{ wrap.querySelectorAll(".chip").forEach(x=>x.classList.remove("active")); c.classList.add("active"); level=key; updateStat(); }; wrap.appendChild(c); };
+  add("all","전체");
+  add("1","기초 회화"); add("2","중급 회화"); add("3","고급 회화");
+})();
 /* 상황 칩 */
 (function buildChips(){
   const wrap=$("sceneChips");
-  const add=(key,label)=>{ const c=el("div","chip"+(key==="all"?" active":""),label); c.dataset.k=key; c.onclick=()=>{ wrap.querySelectorAll(".chip").forEach(x=>x.classList.remove("active")); c.classList.add("active"); scene=key; updateStat(); }; wrap.appendChild(c); };
+  const add=(key,label)=>{ const c=el("div","chip"+(key==="all"?" active":""),label); c.onclick=()=>{ wrap.querySelectorAll(".chip").forEach(x=>x.classList.remove("active")); c.classList.add("active"); scene=key; updateStat(); }; wrap.appendChild(c); };
   add("all","전체");
   Object.keys(SCENES).forEach(k=>add(k,SCENES[k]));
 })();
-function phrasesFor(s){ return s==="all"?PHRASES:PHRASES.filter(p=>p.scene===s); }
-function dialogsFor(s){ const d=s==="all"?DIALOGS:DIALOGS.filter(x=>x.scene===s); return d.length>=4?d:DIALOGS; }
-function updateStat(){ $("homeStat").textContent = `표현 ${phrasesFor(scene).length}개 · 대화 ${(scene==="all"?DIALOGS:DIALOGS.filter(x=>x.scene===scene)).length}개`; }
+/* 난이도 + 상황 동시 필터 */
+function matchLv(x){ return level==="all" || String(x.lv)===String(level); }
+function matchSc(x){ return scene==="all" || x.scene===scene; }
+function phrasesFor(){ return PHRASES.filter(p=>matchLv(p)&&matchSc(p)); }
+function dialogsFor(){
+  let d=DIALOGS.filter(x=>matchLv(x)&&matchSc(x));
+  if(d.length<4) d=DIALOGS.filter(x=>matchLv(x));   // 상황까지 좁혀 부족하면 난이도만
+  if(d.length<4) d=DIALOGS;                          // 그래도 부족하면 전체
+  return d;
+}
+function updateStat(){
+  const ph=phrasesFor().length;
+  const dl=DIALOGS.filter(x=>matchLv(x)&&matchSc(x)).length;
+  $("homeStat").textContent = `이 조건의 표현 ${ph}개 · 대화 ${dl}개`;
+}
 updateStat();
 
 /* ===== 회화 퀴즈 ===== */
 let queue=[], retry=[], idx=0, score=0, totalDone=0, wrongs=[], current=null;
 
 function buildQueue(){
-  const ps = shuffle(phrasesFor(scene)).map(p=>({type:"A", p}));
-  const ds = shuffle(dialogsFor(scene)).map(d=>({type:"B", d}));
+  const ps = shuffle(phrasesFor()).map(p=>({type:"A", p}));
+  const ds = shuffle(dialogsFor()).map(d=>({type:"B", d}));
   // 표현 고르기와 대화 완성을 적절히 섞기
   let pool = shuffle([...ps, ...ds.slice(0, Math.max(4, Math.floor(ps.length*0.5)))]);
   return pool.slice(0, Math.min(12, pool.length));
@@ -218,7 +242,8 @@ function renderQ(){
     $("qSituation").textContent="["+SCENES[p.scene]+"]";
     $("qMain").textContent=p.ko;
     correctVal=p.en; speakText=p.en;
-    choices=distinctChoices(p.en, PHRASES, "en", 3);
+    let pool=PHRASES.filter(x=>x.lv===p.lv); if(pool.length<4) pool=PHRASES;
+    choices=distinctChoices(p.en, pool, "en", 3);
   } else {
     const d=item.d;
     $("qType").textContent="💬 알맞은 응답은?";
@@ -226,7 +251,8 @@ function renderQ(){
     $("qMain").innerHTML=`<span class="speaker">상대</span>${d.a}`;
     $("qKo").textContent="("+d.ko.split("→")[0].trim()+")";
     correctVal=d.b; speakText=d.b;
-    choices=distinctChoices(d.b, DIALOGS, "b", 3);
+    let pool=DIALOGS.filter(x=>x.lv===d.lv); if(pool.length<4) pool=DIALOGS;
+    choices=distinctChoices(d.b, pool, "b", 3);
   }
   current={item, correctVal, speakText, answered:false};
 
@@ -285,7 +311,7 @@ $("homeBtn").onclick=()=>show("home");
 /* ===== 표현 카드 (쇼츠형) ===== */
 let cvDeck=[], cvIdx=0, cvActive=false;
 function openCards(){
-  cvDeck=shuffle(phrasesFor(scene));
+  cvDeck=shuffle(phrasesFor());
   if(cvDeck.length===0){ showToast("이 상황에는 표현이 부족해요"); return; }
   cvIdx=0; cvActive=true; $("cvHint").style.display="";
   $("cardview").classList.add("on"); renderCard("up");
